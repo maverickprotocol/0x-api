@@ -231,6 +231,7 @@ export class SwapQuoter {
             calcOpts.rfqt.rfqClient = rfqClient;
         }
         const limitOrders = await this.getLimitOrders(marketOperation, makerToken, takerToken, calcOpts);
+
         const result = await this._marketOperationUtils.getOptimizerResultAsync(
             makerToken,
             takerToken,

@@ -37,6 +37,7 @@ import {
     GMX_READER_BY_CHAIN_ID,
     GMX_ROUTER_BY_CHAIN_ID,
     GMX_VAULT_BY_CHAIN_ID,
+    MAVERICK_V1_INFO_BY_CHAIN_ID,
     KYBER_DMM_ROUTER_BY_CHAIN_ID,
     LIDO_INFO_BY_CHAIN,
     MAINNET_TOKENS,
@@ -57,6 +58,7 @@ import {
     WOOFI_SUPPORTED_TOKENS,
     ZERO_AMOUNT,
 } from './constants';
+import { MaverickV1PoolsCache } from './maverick_V1_pool_cache';
 import { BalancerPoolsCache, PoolsCache } from './pools_cache';
 import { BalancerV2SwapInfoCache } from './pools_cache/balancer_v2_swap_info_cache';
 import { SamplerContractOperation } from './sampler_contract_operation';
@@ -83,6 +85,7 @@ import {
     KyberDmmFillData,
     LidoFillData,
     LidoInfo,
+    MaverickV1FillData,
     MakerPsmFillData,
     MooniswapFillData,
     MultiHopFillData,
@@ -94,6 +97,7 @@ import {
     UniswapV2FillData,
     VelodromeFillData,
     WOOFiFillData,
+    MaverickV1PoolInfo,
 } from './types';
 
 /**
@@ -108,6 +112,7 @@ export const BATCH_SOURCE_FILTERS = SourceFilters.all().exclude([ERC20BridgeSour
 export interface PoolsCacheMap {
     [ERC20BridgeSource.Balancer]: PoolsCache;
     [ERC20BridgeSource.BalancerV2]: BalancerV2SwapInfoCache | undefined;
+    [ERC20BridgeSource.MaverickV1]: MaverickV1PoolsCache | undefined;
 }
 
 /**
@@ -144,6 +149,7 @@ export class SamplerOperations {
                       BALANCER_V2_VAULT_ADDRESS_BY_CHAIN[chainId] === NULL_ADDRESS
                           ? undefined
                           : new BalancerV2SwapInfoCache(chainId),
+                  [ERC20BridgeSource.MaverickV1]: MaverickV1PoolsCache.create(chainId),
               };
 
         const aaveV2SubgraphUrl = AAVE_V2_SUBGRAPH_URL_BY_CHAIN_ID[chainId];
@@ -489,6 +495,54 @@ export class SamplerOperations {
                     return samples;
                 }
                 return [];
+            },
+        });
+    }
+
+    public getMaverickV1SellQuotes(
+        poolInfo: MaverickV1PoolInfo,
+        makerToken: string,
+        takerToken: string,
+        takerFillAmounts: BigNumber[],
+        source: ERC20BridgeSource,
+    ): SourceQuoteOperation<MaverickV1FillData> {
+        return new SamplerContractOperation({
+            source,
+            fillData: { pool: poolInfo.pool, router: poolInfo.router, gasAmounts: [] },
+            contract: this._samplerContract,
+            function: this._samplerContract.sampleSellsFromMaverickV1,
+            params: [poolInfo.pool, poolInfo.inspector, takerToken, takerFillAmounts],
+            callback: (callResults: string, fillData: MaverickV1FillData): BigNumber[] => {
+                const [samples, gasUsed] = this._samplerContract.getABIDecodedReturnData<[BigNumber[], BigNumber[]]>(
+                    'sampleSellsFromMaverickV1',
+                    callResults,
+                );
+                fillData.gasAmounts = gasUsed;
+                return samples;
+            },
+        });
+    }
+
+    public getMaverickV1BuyQuotes(
+        poolInfo: MaverickV1PoolInfo,
+        makerToken: string,
+        takerToken: string,
+        makerFillAmounts: BigNumber[],
+        source: ERC20BridgeSource,
+    ): SourceQuoteOperation<MaverickV1FillData> {
+        return new SamplerContractOperation({
+            source,
+            fillData: { pool: poolInfo.pool, router: poolInfo.router, gasAmounts: [] },
+            contract: this._samplerContract,
+            function: this._samplerContract.sampleBuysFromMaverickV1,
+            params: [poolInfo.pool, poolInfo.inspector, takerToken, makerFillAmounts],
+            callback: (callResults: string, fillData: MaverickV1FillData): BigNumber[] => {
+                const [samples, gasUsed] = this._samplerContract.getABIDecodedReturnData<[BigNumber[], BigNumber[]]>(
+                    'sampleBuysFromMaverickV1',
+                    callResults,
+                );
+                fillData.gasAmounts = gasUsed;
+                return samples;
             },
         });
     }
@@ -1618,6 +1672,27 @@ export class SamplerOperations {
                                     this.getMooniswapSellQuotes(registry, makerToken, takerToken, takerFillAmounts),
                                 ),
                         ];
+
+                    case ERC20BridgeSource.MaverickV1:
+                        const cache = this.poolsCaches[ERC20BridgeSource.MaverickV1];
+                        const info = MAVERICK_V1_INFO_BY_CHAIN_ID[this.chainId];
+
+                        if (!cache || !info) {
+                            return [];
+                        }
+
+                        return cache
+                            .getPoolAddressesForPair(takerToken, makerToken)
+                            .map((pool) =>
+                                this.getMaverickV1SellQuotes(
+                                    { pool: pool, inspector: info.inspector, router: info.router },
+                                    makerToken,
+                                    takerToken,
+                                    takerFillAmounts,
+                                    ERC20BridgeSource.MaverickV1,
+                                ),
+                            );
+
                     case ERC20BridgeSource.Balancer:
                         return this.poolsCaches[ERC20BridgeSource.Balancer]
                             .getPoolAddressesForPair(takerToken, makerToken)
@@ -2029,6 +2104,26 @@ export class SamplerOperations {
                             return [];
                         }
                         return this.getMakerPsmBuyQuotes(psmInfo, makerToken, takerToken, makerFillAmounts);
+                    }
+                    case ERC20BridgeSource.MaverickV1: {
+                        const cache = this.poolsCaches[ERC20BridgeSource.MaverickV1];
+                        const info = MAVERICK_V1_INFO_BY_CHAIN_ID[this.chainId];
+
+                        if (!cache || !info) {
+                            return [];
+                        }
+
+                        return cache
+                            .getPoolAddressesForPair(takerToken, makerToken)
+                            .map((pool) =>
+                                this.getMaverickV1BuyQuotes(
+                                    { pool: pool, inspector: info.inspector, router: info.router },
+                                    makerToken,
+                                    takerToken,
+                                    makerFillAmounts,
+                                    ERC20BridgeSource.MaverickV1,
+                                ),
+                            );
                     }
                     case ERC20BridgeSource.UniswapV3: {
                         // Rebasing tokens lead to a high revert rate.

@@ -36,6 +36,7 @@ export * from '../test/generated-wrappers/kyber_dmm_sampler';
 export * from '../test/generated-wrappers/lido_sampler';
 export * from '../test/generated-wrappers/m_stable_sampler';
 export * from '../test/generated-wrappers/maker_p_s_m_sampler';
+export * from '../test/generated-wrappers/maverick_v1_sampler';
 export * from '../test/generated-wrappers/mooniswap_sampler';
 export * from '../test/generated-wrappers/native_order_sampler';
 export * from '../test/generated-wrappers/platypus_sampler';

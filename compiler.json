@@ -23,6 +23,7 @@
         "./contracts/src/LidoSampler.sol",
         "./contracts/src/MStableSampler.sol",
         "./contracts/src/MakerPSMSampler.sol",
+        "./contracts/src/MaverickV1Sampler.sol",
         "./contracts/src/MooniswapSampler.sol",
         "./contracts/src/NativeOrderSampler.sol",
         "./contracts/src/PlatypusSampler.sol",

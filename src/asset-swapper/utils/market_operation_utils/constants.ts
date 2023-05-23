@@ -28,6 +28,7 @@ import {
     UniswapV2FillData,
     TickDEXMultiPathFillData,
     WOOFiFillData,
+    MaverickV1FillData,
 } from './types';
 
 import { ERC20BridgeSource, FeeSchedule, FillData, GasSchedule, GetMarketOrdersOpts } from '../../types';
@@ -85,6 +86,7 @@ export const SELL_SOURCE_FILTER_BY_CHAIN_ID: Record<ChainId, SourceFilters> = {
         ERC20BridgeSource.CryptoCom,
         ERC20BridgeSource.Lido,
         ERC20BridgeSource.MakerPsm,
+        ERC20BridgeSource.MaverickV1,
         ERC20BridgeSource.KyberDmm,
         ERC20BridgeSource.Component,
         ERC20BridgeSource.Saddle,
@@ -238,6 +240,7 @@ export const BUY_SOURCE_FILTER_BY_CHAIN_ID: Record<ChainId, SourceFilters> = {
         ERC20BridgeSource.Lido,
         ERC20BridgeSource.CryptoCom,
         ERC20BridgeSource.MakerPsm,
+        ERC20BridgeSource.MaverickV1,
         ERC20BridgeSource.KyberDmm,
         ERC20BridgeSource.Component,
         ERC20BridgeSource.Saddle,
@@ -1632,6 +1635,23 @@ export const BALANCER_V2_SUBGRAPH_URL_BY_CHAIN = valueByChainId(
     null,
 );
 
+export const MAVERICK_V1_SUBGRAPH_URL_BY_CHAIN = valueByChainId(
+    {
+        [ChainId.Mainnet]: 'https://api.thegraph.com/subgraphs/name/maverickprotocol/maverick-mainnet',
+    },
+    null,
+);
+
+export const MAVERICK_V1_INFO_BY_CHAIN_ID = valueByChainId(
+    {
+        [ChainId.Mainnet]: {
+            router: '0x4a585e0f7c18e2c414221d6402652d5e0990e5f8',
+            inspector: '0x3b4a40e7a8197e2E719d416D143564a5D36B660d',
+        },
+    },
+    null,
+);
+
 export const UNISWAPV3_CONFIG_BY_CHAIN_ID = valueByChainId(
     {
         [ChainId.Mainnet]: {
@@ -2042,6 +2062,12 @@ export const DEFAULT_GAS_SCHEDULE: GasSchedule = {
         }
 
         return gas;
+    },
+    [ERC20BridgeSource.MaverickV1]: (fillData?: FillData) => {
+        const maverickV1FillData = fillData as MaverickV1FillData;
+        const pathAmountsWithGasUsed = maverickV1FillData.gasAmounts.map((g) => g.toNumber()).filter((p) => p > 0);
+        const medianGasUsed = pathAmountsWithGasUsed[Math.floor(pathAmountsWithGasUsed.length / 2)] ?? 0;
+        return medianGasUsed;
     },
     [ERC20BridgeSource.Lido]: (fillData?: FillData) => {
         const lidoFillData = fillData as LidoFillData;

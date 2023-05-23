@@ -46,6 +46,7 @@ import {
     PathAmount,
     VelodromeFillData,
     WOOFiFillData,
+    MaverickV1FillData,
 } from './types';
 
 export function createOrdersFromTwoHopSample(
@@ -100,6 +101,8 @@ export function getErc20BridgeSourceToBridgeSource(source: ERC20BridgeSource): s
             return encodeBridgeSourceId(BridgeProtocol.Dodo, 'Dodo');
         case ERC20BridgeSource.MakerPsm:
             return encodeBridgeSourceId(BridgeProtocol.MakerPsm, 'MakerPsm');
+        case ERC20BridgeSource.MaverickV1:
+            return encodeBridgeSourceId(BridgeProtocol.MaverickV1, 'MaverickV1');
         case ERC20BridgeSource.Mooniswap:
             return encodeBridgeSourceId(BridgeProtocol.Mooniswap, 'Mooniswap');
         case ERC20BridgeSource.MStable:
@@ -237,6 +240,11 @@ export function createBridgeDataForBridgeOrder(order: OptimizedMarketBridgeOrder
                 curveFillData.fromTokenIdx,
                 curveFillData.toTokenIdx,
             ]);
+            break;
+        }
+        case ERC20BridgeSource.MaverickV1: {
+            const maverickFillData = (order as OptimizedMarketBridgeOrder<MaverickV1FillData>).fillData;
+            bridgeData = encoder.encode([maverickFillData.router, maverickFillData.pool]);
             break;
         }
         case ERC20BridgeSource.Balancer: {
@@ -515,6 +523,7 @@ const BRIDGE_ENCODERS: {
         { name: 'router', type: 'address' },
         { name: 'path', type: 'bytes' },
     ]),
+    [ERC20BridgeSource.MaverickV1]: AbiEncoder.create('(address,address)'),
     [ERC20BridgeSource.KyberDmm]: AbiEncoder.create('(address,address[],address[])'),
     [ERC20BridgeSource.Lido]: AbiEncoder.create('(address,address)'),
     [ERC20BridgeSource.AaveV2]: AbiEncoder.create('(address,address)'),

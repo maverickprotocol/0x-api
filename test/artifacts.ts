@@ -37,6 +37,7 @@ import * as IUniswapV2Router01 from '../test/generated-artifacts/IUniswapV2Route
 import * as KyberDmmSampler from '../test/generated-artifacts/KyberDmmSampler.json';
 import * as LidoSampler from '../test/generated-artifacts/LidoSampler.json';
 import * as MakerPSMSampler from '../test/generated-artifacts/MakerPSMSampler.json';
+import * as MaverickV1Sampler from '../test/generated-artifacts/MaverickV1Sampler.json';
 import * as MooniswapSampler from '../test/generated-artifacts/MooniswapSampler.json';
 import * as MStableSampler from '../test/generated-artifacts/MStableSampler.json';
 import * as NativeOrderSampler from '../test/generated-artifacts/NativeOrderSampler.json';
@@ -75,6 +76,7 @@ export const artifacts = {
     LidoSampler: LidoSampler as ContractArtifact,
     MStableSampler: MStableSampler as ContractArtifact,
     MakerPSMSampler: MakerPSMSampler as ContractArtifact,
+    MaverickV1Sampler: MaverickV1Sampler as ContractArtifact,
     MooniswapSampler: MooniswapSampler as ContractArtifact,
     NativeOrderSampler: NativeOrderSampler as ContractArtifact,
     PlatypusSampler: PlatypusSampler as ContractArtifact,

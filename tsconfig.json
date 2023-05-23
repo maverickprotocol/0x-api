@@ -62,6 +62,7 @@
         "test/generated-artifacts/LidoSampler.json",
         "test/generated-artifacts/MStableSampler.json",
         "test/generated-artifacts/MakerPSMSampler.json",
+        "test/generated-artifacts/MaverickV1Sampler.json",
         "test/generated-artifacts/MooniswapSampler.json",
         "test/generated-artifacts/NativeOrderSampler.json",
         "test/generated-artifacts/PlatypusSampler.json",

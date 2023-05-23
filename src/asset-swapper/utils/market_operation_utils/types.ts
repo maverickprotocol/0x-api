@@ -88,6 +88,18 @@ export interface BalancerV2PoolInfo {
     vault: string;
 }
 
+export interface MaverickV1PoolInfo {
+    router: string;
+    pool: string;
+    inspector: string;
+}
+
+export interface MaverickV1FillData extends FillData {
+    router: string;
+    pool: string;
+    gasAmounts: BigNumber[];
+}
+
 export interface AaveInfo {
     lendingPool: string;
     aToken: string;
